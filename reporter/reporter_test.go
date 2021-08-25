@@ -26,11 +26,11 @@ func TestGenerate(t *testing.T) {
 	}
 
 	sumaryData := [][]string{
-		[]string{"hdhd", "3","3", "3"},
+		{"hdhd", "3","3", "3"},
 	}
 
 	calculationData := [][]string{
-		[]string{"hdhd", "3","3", "3", "2", "1", "3"},
+		{"hdhd", "3","3", "3", "2", "1", "3"},
 	}
 
 	buffer, err := reporter.Generate(headers, images, sumaryData, calculationData)
