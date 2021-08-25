@@ -10,7 +10,9 @@ import (
 	"github.com/johnfercher/maroto/pkg/props"
 )
 
-type PDF interface{}
+type PDF interface{
+	Generate(headersParams HeadersParams, images []string, sumaryData [][]string, calculationData [][]string)(bytes.Buffer, error)
+}
 
 type pdfReporter struct{
 	moroto pdf.Maroto 
