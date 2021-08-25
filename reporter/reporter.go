@@ -14,7 +14,6 @@ type PDF interface{}
 
 type pdfReporter struct{
 	moroto pdf.Maroto 
-
 }
 
 type HeadersParams struct{
@@ -31,7 +30,7 @@ func NewPDFReporter() *pdfReporter{
 	}
 }
 
-func (p *pdfReporter) Generate(headersParams HeadersParams, images []string, sumaryData, calculationData [][]string) (bytes.Buffer, error){
+func (p *pdfReporter) Generate(headersParams HeadersParams, images []string, sumaryData [][]string, calculationData [][]string) (bytes.Buffer, error){
 	m := pdf.NewMaroto(consts.Portrait, consts.A4)
 	m.SetPageMargins(10, 15, 10)
 	//m.SetBorder(true)
@@ -133,80 +132,8 @@ func (p *pdfReporter) header(params HeadersParams){
 	})
 }
 
-
-func SummaryTable(m pdf.Maroto, data [][]string) {
-	headers := []string{
-		"Numero de cuentas",
-		"Ahorro Mensual",
-		"Meses en el programa",
-		"Porcentaje de descuento",
-	}
-
-	m.TableList(headers, data, props.TableList{
-		HeaderProp: props.TableListContent{
-			Size:      10,
-			GridSizes: []uint{3, 3, 3, 3},
-			Family:    consts.Courier,
-			Style:     consts.Bold,
-		},
-		ContentProp: props.TableListContent{
-			Size:      11,
-			GridSizes: []uint{3, 3, 3, 3},
-			Family:    consts.Courier,
-			Style:     consts.Bold,
-		},
-		Align:              consts.Center,
-		HeaderContentSpace: 1,
-		Line:               false,
-	})
-}
-
-func CalculationTable(p pdf.Maroto, data [][]string) {
-	headers := []string{
-		"",
-		"Banco",
-		"Numero de cuenta",
-		"Deuda inicial",
-		"Pago al banco",
-		"Comisión",
-		"Mes de Liquidación",
-	}
-
-	p.SetBackgroundColor(tealColor)
-	p.Row(10, func() {
-		p.Col(12, func() {
-			p.Text("Transacciones", props.Text{
-				Top:    2,
-				Size:   13,
-				Style:  consts.Bold,
-				Align:  consts.Center,
-				Family: consts.Courier,
-				Color:  color.NewWhite(),
-			})
-		})
-	})
-	p.SetBackgroundColor(color.NewWhite())
-
-	p.TableList(headers, data, props.TableList{
-		HeaderProp: props.TableListContent{
-			Size:      8,
-			GridSizes: []uint{1, 2, 2, 2, 2, 2, 1},
-		},
-		ContentProp: props.TableListContent{
-			Size:      8,
-			GridSizes: []uint{1, 2, 2, 2, 2, 2, 1},
-		},
-		Align:              consts.Center,
-		HeaderContentSpace: 1,
-		Line:               false,
-		AlternatedBackground: &color.Color{
-			Red:   210,
-			Green: 200,
-			Blue:  260,
-		},
-	})
-}
-
+//Data is limitated to the number of columns, because the system
+//can crash if we don't get the same size as the headers
 func (p *pdfReporter) summaryTable(data [][]string) {
 	headers := []string{
 		"Numero de cuentas",
@@ -234,6 +161,8 @@ func (p *pdfReporter) summaryTable(data [][]string) {
 	})
 }
 
+//Data is limitated to the number of columns, because the system
+//can crash if we don't get the same size as the headers
 func (p *pdfReporter) calculationTable(data [][]string) {
 	headers := []string{
 		"",
@@ -260,7 +189,7 @@ func (p *pdfReporter) calculationTable(data [][]string) {
 	})
 	p.moroto.SetBackgroundColor(color.NewWhite())
 
-	p.moroto.TableList(headers, data, props.TableList{
+	p.moroto.TableList(headers, data[:], props.TableList{
 		HeaderProp: props.TableListContent{
 			Size:      8,
 			GridSizes: []uint{1, 2, 2, 2, 2, 2, 1},
