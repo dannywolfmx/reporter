@@ -10,45 +10,44 @@ import (
 	"github.com/johnfercher/maroto/pkg/props"
 )
 
-type PDF interface{
-	Generate(headersParams HeadersParams, images []string, sumaryData [][]string, calculationData [][]string)(bytes.Buffer, error)
+type PDF interface {
+	Generate(headersParams HeadersParams, images []string, sumaryData [][]string, calculationData [][]string) (bytes.Buffer, error)
 }
 
-type pdfReporter struct{
-	moroto pdf.Maroto 
+type pdfReporter struct {
+	moroto pdf.Maroto
 }
 
-type HeadersParams struct{
-	MinimumDiscount string
-	InvoiceNumber string
+type HeadersParams struct {
+	MinimumDiscount                string
+	InvoiceNumber                  string
 	Name, LastName, SecondLastName string
-	ActualDate string
+	ActualDate                     string
 }
 
-func NewPDFReporter() *pdfReporter{
+func NewPDFReporter() *pdfReporter {
 	moroto := pdf.NewMaroto(consts.Portrait, consts.A4)
+	moroto.SetPageMargins(10, 15, 10)
 	return &pdfReporter{
-		moroto: moroto,	
+		moroto: moroto,
 	}
 }
 
-func (p *pdfReporter) Generate(headersParams HeadersParams, images []string, sumaryData [][]string, calculationData [][]string) (bytes.Buffer, error){
-	m := pdf.NewMaroto(consts.Portrait, consts.A4)
-	m.SetPageMargins(10, 15, 10)
+func (p *pdfReporter) Generate(footer string, headersParams HeadersParams, images []string, sumaryData [][]string, calculationData [][]string) (bytes.Buffer, error) {
 	//m.SetBorder(true)
 
+	p.footer(footer)
 	p.header(headersParams)
-	m.Row(4, func() {})
 
 	p.summaryTable(sumaryData)
-	m.Row(4, func() {})
+	p.moroto.Row(4, func() {})
 
 	p.calculationTable(calculationData)
-	m.Row(4, func() {})
+	p.moroto.Row(4, func() {})
 
 	p.printCharts(images)
 
-	return p.moroto.Output() 
+	return p.moroto.Output()
 }
 
 func (p *pdfReporter) printCharts(images []string) {
@@ -63,72 +62,84 @@ func (p *pdfReporter) printCharts(images []string) {
 				})
 			})
 		})
+		p.moroto.Row(5, func() {})
 	}
 
 }
 
-func (p *pdfReporter) header(params HeadersParams){
-	p.moroto.RegisterHeader(func() {
-		p.moroto.SetBackgroundColor(darPurpleColor)
-		p.moroto.Row(12, func() {
+func (p *pdfReporter) footer(text string) {
+	p.moroto.RegisterFooter(func() {
+		p.moroto.Row(5, func() {
 			p.moroto.Col(12, func() {
-				p.moroto.Text("Estrategia de liquidación de deuda ", props.Text{
-					Color:  color.NewWhite(),
-					Top:    4,
-					Style:  consts.Bold,
-					Family: consts.Courier,
-					Size:   13,
-					Align:  consts.Center,
+				p.moroto.Text(text, props.Text{
+					Align: consts.Left,
+					Size:  6,
 				})
 			})
 		})
+	})
+}
 
-		p.moroto.Row(12, func() {
-			p.moroto.ColSpace(1)
-
-			p.moroto.Col(4, func() {
-				p.moroto.Text(fmt.Sprintf("Folio: %s", params.InvoiceNumber), props.Text{
-					Color:  color.NewWhite(),
-					Top:    4,
-					Style:  consts.Bold,
-					Family: consts.Courier,
-					Size:   13,
-					Align:  consts.Left,
-				})
+func (p *pdfReporter) header(params HeadersParams) {
+	p.moroto.SetBackgroundColor(darPurpleColor)
+	p.moroto.Row(12, func() {
+		p.moroto.Col(12, func() {
+			p.moroto.Text("Estrategia de liquidación de deuda ", props.Text{
+				Color:  color.NewWhite(),
+				Top:    4,
+				Style:  consts.Bold,
+				Family: consts.Courier,
+				Size:   13,
+				Align:  consts.Center,
 			})
+		})
+	})
 
-			p.moroto.Col(7, func() {
-				descuento := fmt.Sprintf("Descuento minimo esperado: %s", params.MinimumDiscount)
-				p.moroto.Text(descuento, props.Text{
-					Color:  color.NewWhite(),
-					Top:    4,
-					Style:  consts.Bold,
-					Family: consts.Courier,
-					Size:   13,
-					Align:  consts.Left,
-				})
+	p.moroto.Row(12, func() {
+		p.moroto.ColSpace(1)
+
+		p.moroto.Col(4, func() {
+			p.moroto.Text(fmt.Sprintf("Folio: %s", params.InvoiceNumber), props.Text{
+				Color:  color.NewWhite(),
+				Top:    4,
+				Style:  consts.Bold,
+				Family: consts.Courier,
+				Size:   13,
+				Align:  consts.Left,
 			})
-
 		})
 
-		p.moroto.SetBackgroundColor(color.NewWhite())
-		p.moroto.Row(11, func() {
-			p.moroto.Col(9, func() {
-				p.moroto.Text(fmt.Sprintf("%s %s %s", params.Name, params.LastName, params.SecondLastName), props.Text{
-					Top:   2,
-					Size:  11,
-					Style: consts.Bold,
-					Align: consts.Center,
-				})
+		p.moroto.Col(7, func() {
+			descuento := fmt.Sprintf("Descuento minimo esperado: %s", params.MinimumDiscount)
+			p.moroto.Text(descuento, props.Text{
+				Color:  color.NewWhite(),
+				Top:    4,
+				Style:  consts.Bold,
+				Family: consts.Courier,
+				Size:   13,
+				Align:  consts.Left,
 			})
+		})
 
-			p.moroto.Col(3, func() {
-				p.moroto.Text(params.ActualDate, props.Text{
-					Top:   2,
-					Size:  11,
-					Style: consts.Bold,
-					Align: consts.Center,
-				})
+	})
+
+	p.moroto.SetBackgroundColor(color.NewWhite())
+	p.moroto.Row(11, func() {
+		p.moroto.Col(9, func() {
+			p.moroto.Text(fmt.Sprintf("%s %s %s", params.Name, params.LastName, params.SecondLastName), props.Text{
+				Top:   2,
+				Size:  11,
+				Style: consts.Bold,
+				Align: consts.Center,
+			})
+		})
+
+		p.moroto.Col(3, func() {
+			p.moroto.Text(params.ActualDate, props.Text{
+				Top:   2,
+				Size:  11,
+				Style: consts.Bold,
+				Align: consts.Center,
 			})
 		})
 	})
@@ -142,18 +153,20 @@ func (p *pdfReporter) summaryTable(data [][]string) {
 		"Ahorro Mensual",
 		"Meses en el programa",
 		"Porcentaje de descuento",
+		"Comision mensual",
+		"Descuento minimo esperado",
 	}
 
 	p.moroto.TableList(headers, data, props.TableList{
 		HeaderProp: props.TableListContent{
-			Size:      10,
-			GridSizes: []uint{3, 3, 3, 3},
+			Size:      9,
+			GridSizes: []uint{2, 2, 2, 2, 2, 2},
 			Family:    consts.Courier,
 			Style:     consts.Bold,
 		},
 		ContentProp: props.TableListContent{
-			Size:      11,
-			GridSizes: []uint{3, 3, 3, 3},
+			Size:      9,
+			GridSizes: []uint{2, 2, 2, 2, 2, 2},
 			Family:    consts.Courier,
 			Style:     consts.Bold,
 		},
