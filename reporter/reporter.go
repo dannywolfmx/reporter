@@ -11,7 +11,7 @@ import (
 )
 
 type PDF interface {
-	Generate(headersParams HeadersParams, images []string, sumaryData [][]string, calculationData [][]string) (bytes.Buffer, error)
+	Generate(footer string, headersParams HeadersParams, images []string, sumaryData [][]string, calculationData [][]string) (bytes.Buffer, error)
 }
 
 type pdfReporter struct {
